@@ -548,12 +548,20 @@ async function fetchSheet(name) {
 
 function parseGviz(text) {
   try {
-    const json = JSON.parse(text.replace(/^[^\(]+\(/, '').replace(/\);\s*$/, ''));
-    const cols = json.table.cols.map(c => c.label).filter(Boolean);
-    return json.table.rows
+    // Strip JSONP wrapper robustly (handles /*O_o*/ prefix and optional semicolon)
+    const cleaned = text
+      .replace(/^[\s\S]*?setResponse\(/, '')
+      .replace(/\)[\s;]*$/, '');
+    const json = JSON.parse(cleaned);
+    if (!json.table) return [];
+    // Build index→label map WITHOUT filtering — preserves correct column positions
+    const colMap = {};
+    json.table.cols.forEach((c, i) => { if (c.label) colMap[i] = c.label; });
+    return (json.table.rows ?? [])
+      .filter(Boolean)                          // skip null rows (empty spreadsheet rows)
       .map(row => {
         const obj = {};
-        row.c.forEach((cell, i) => { if (cols[i]) obj[cols[i]] = cell?.v ?? null; });
+        (row.c ?? []).forEach((cell, i) => { if (colMap[i]) obj[colMap[i]] = cell?.v ?? null; });
         return obj;
       })
       .filter(r => Object.values(r).some(v => v !== null));
@@ -646,11 +654,27 @@ function renderFilters() {
   else if (sh.format === 'dpo') buildDpoFilters(card, sh);
   else if (sh.groupCol) buildGenericFilters(card, sh);
 
-  // Metric picker (always last)
+  // ── Основные метрики (CSI bento-box) ─────────────────────────
+  const csiMetrics = sh.metrics.filter(m => m.toLowerCase().includes('csi'));
+  if (csiMetrics.length) {
+    card.appendChild(mkSep());
+    const cg = mkGroup('Основные метрики');
+    const cpills = mkEl('div', 'pills');
+    csiMetrics.forEach(m => {
+      const btn = mkEl('button', 'pill' + (m === metricFlt ? ' active' : ''));
+      btn.textContent = m;
+      btn.onclick = () => { metricFlt = m; renderFilters(); renderChart(); };
+      cpills.appendChild(btn);
+    });
+    cg.appendChild(cpills);
+    card.appendChild(cg);
+  }
+
+  // ── Все метрики (dropdown) ────────────────────────────────────
   card.appendChild(mkSep());
-  const mg = mkGroup('Метрика', 'Числовой показатель для отображения на графике и в KPI-карточках');
+  const mg = mkGroup('Метрика');
   const msel = mkSelect(sh.metrics, metricFlt);
-  msel.onchange = () => { metricFlt = msel.value; renderChart(); };
+  msel.onchange = () => { metricFlt = msel.value; renderFilters(); renderChart(); };
   mg.appendChild(msel);
   card.appendChild(mg);
 }
