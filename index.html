@@ -1,0 +1,1113 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UU Analytics</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Onest:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #f4f6f9;
+      --card:      #ffffff;
+      --border:    #e4e8ef;
+      --primary:   #2563eb;
+      --text:      #0d1117;
+      --muted:     #6b7280;
+      --light:     #f8fafc;
+      --green:     #16a34a;
+      --red:       #dc2626;
+      --radius:    10px;
+      --shadow-sm: 0 1px 3px rgba(15,23,42,.06), 0 1px 2px rgba(15,23,42,.04);
+      --shadow:    0 4px 12px rgba(15,23,42,.08), 0 1px 3px rgba(15,23,42,.05);
+    }
+
+    body {
+      font-family: 'Onest', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
+
+    /* ── Header ──────────────────────────────────────────────── */
+    .header {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      height: 52px;
+      padding: 0 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 200;
+    }
+    .logo {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -.03em;
+      color: var(--text);
+    }
+    .logo em { color: var(--primary); font-style: normal; }
+    .hdr-right { display: flex; align-items: center; gap: 14px; }
+    #lastUpdated { font-size: 11.5px; color: var(--muted); letter-spacing: -.01em; }
+
+    .btn-refresh {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 32px;
+      padding: 0 14px;
+      border-radius: 7px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      font: 500 12.5px 'Onest', sans-serif;
+      color: var(--muted);
+      cursor: pointer;
+      transition: border-color .15s, color .15s;
+    }
+    .btn-refresh:hover { border-color: var(--primary); color: var(--primary); }
+    .btn-refresh .ico { transition: transform .4s; }
+    .btn-refresh.loading .ico { animation: spin .7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Sheet tabs ──────────────────────────────────────────── */
+    .tabs-bar {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 0 28px;
+      display: flex;
+      gap: 0;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .tabs-bar::-webkit-scrollbar { display: none; }
+    .tab {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      height: 44px;
+      padding: 0 16px;
+      border: none;
+      border-bottom: 2px solid transparent;
+      background: none;
+      font: 500 13px 'Onest', sans-serif;
+      color: var(--muted);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: color .15s, border-color .15s;
+    }
+    .tab:hover { color: var(--text); }
+    .tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+    .tab-badge {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+    .tab-badge.svod    { background: #dbeafe; color: #1d4ed8; }
+    .tab-badge.dpo     { background: #f3e8ff; color: #7c3aed; }
+    .tab-badge.generic { background: #dcfce7; color: #166534; }
+
+    /* ── Main layout ─────────────────────────────────────────── */
+    .main {
+      max-width: 1300px;
+      margin: 0 auto;
+      padding: 24px 24px 56px;
+    }
+
+    /* ── Notice ──────────────────────────────────────────────── */
+    .notice {
+      background: #fefce8;
+      border: 1px solid #fde047;
+      border-radius: var(--radius);
+      padding: 12px 18px;
+      font-size: 13px;
+      color: #854d0e;
+      margin-bottom: 18px;
+    }
+    .notice code { background: #fef08a; padding: 0 4px; border-radius: 3px; font-family: monospace; font-size: 12px; }
+
+    /* ── Filter card ─────────────────────────────────────────── */
+    .filters-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 20px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      gap: 18px;
+      margin-bottom: 18px;
+      box-shadow: var(--shadow-sm);
+    }
+    .filter-group { display: flex; flex-direction: column; gap: 5px; }
+    .filter-label {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: var(--muted);
+    }
+    .sep {
+      width: 1px;
+      height: 34px;
+      background: var(--border);
+      align-self: flex-end;
+      margin-bottom: 1px;
+    }
+
+    /* Pills */
+    .pills { display: flex; flex-wrap: wrap; gap: 5px; }
+    .pill {
+      height: 30px;
+      padding: 0 12px;
+      border-radius: 15px;
+      border: 1px solid var(--border);
+      background: transparent;
+      font: 500 12px 'Onest', sans-serif;
+      color: var(--muted);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all .15s;
+    }
+    .pill:hover:not(.active) { border-color: var(--primary); color: var(--primary); }
+    .pill.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+
+    /* Select */
+    select {
+      height: 32px;
+      padding: 0 28px 0 10px;
+      border-radius: 7px;
+      border: 1px solid var(--border);
+      background: var(--card) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 8px center;
+      font: 500 13px 'Onest', sans-serif;
+      color: var(--text);
+      cursor: pointer;
+      appearance: none;
+      min-width: 144px;
+      transition: border-color .15s;
+    }
+    select:focus { outline: none; border-color: var(--primary); }
+
+    /* ── KPI row ─────────────────────────────────────────────── */
+    .kpi-row {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    /* ── Hint icon ───────────────────────────────────────────── */
+    .hint-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 13px; height: 13px;
+      border-radius: 50%;
+      background: var(--border);
+      color: var(--muted);
+      font-size: 8px;
+      font-weight: 700;
+      cursor: help;
+      position: relative;
+      margin-left: 4px;
+      vertical-align: middle;
+      flex-shrink: 0;
+    }
+    .hint-icon::after {
+      content: attr(data-tip);
+      position: absolute;
+      bottom: calc(100% + 7px);
+      left: 50%;
+      transform: translateX(-50%);
+      width: 190px;
+      background: #1e293b;
+      color: #f1f5f9;
+      font-size: 11px;
+      font-weight: 400;
+      line-height: 1.45;
+      padding: 7px 10px;
+      border-radius: 6px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity .15s;
+      white-space: normal;
+      text-transform: none;
+      letter-spacing: 0;
+      z-index: 999;
+    }
+    .hint-icon:hover::after { opacity: 1; }
+    .kpi-lbl { display: flex; align-items: center; }
+    .kpi-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 18px 14px;
+      box-shadow: var(--shadow-sm);
+      transition: box-shadow .2s;
+    }
+    .kpi-card:hover { box-shadow: var(--shadow); }
+    .kpi-lbl {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: var(--muted);
+      margin-bottom: 7px;
+    }
+    .kpi-val {
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -.04em;
+      line-height: 1;
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+    }
+    .kpi-val.green { color: var(--green); }
+    .kpi-val.red   { color: var(--red); }
+    .kpi-val.blue  { color: var(--primary); }
+    .kpi-sub {
+      margin-top: 5px;
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: -.01em;
+    }
+    .kpi-ref-badge {
+      display: inline-block;
+      margin-top: 6px;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 4px;
+    }
+    .kpi-ref-badge.up   { background: #dcfce7; color: #166534; }
+    .kpi-ref-badge.down { background: #fee2e2; color: #991b1b; }
+
+    /* ── Chart card ──────────────────────────────────────────── */
+    .chart-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px 24px 20px;
+      box-shadow: var(--shadow-sm);
+    }
+    .chart-hdr {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 20px;
+    }
+    .chart-title {
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: -.02em;
+      color: var(--text);
+    }
+    .chart-sub {
+      margin-top: 3px;
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: -.01em;
+    }
+    .legend-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11.5px;
+      color: var(--muted);
+    }
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    .chart-wrap {
+      position: relative;
+      width: 100%;
+      min-height: 380px;
+    }
+
+    /* ── States ──────────────────────────────────────────────── */
+    .state-msg {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      font-size: 13.5px;
+      color: var(--muted);
+    }
+    .spinner {
+      width: 28px;
+      height: 28px;
+      border: 2.5px solid var(--border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+    }
+    .spin { animation: spin .75s linear infinite; }
+    .err-text { color: var(--red); }
+
+    /* ── Responsive ──────────────────────────────────────────── */
+    @media (max-width: 1100px) {
+      .kpi-row { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 800px) {
+      .kpi-row { grid-template-columns: repeat(2, 1fr); }
+      .header, .tabs-bar { padding: 0 16px; }
+      .main { padding: 16px 12px 40px; }
+    }
+    @media (max-width: 480px) {
+      .kpi-row { grid-template-columns: 1fr 1fr; }
+      .kpi-val { font-size: 22px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ──────────────────────────────────────────────────────────────── -->
+<header class="header">
+  <div class="logo">UU <em>Analytics</em></div>
+  <div class="hdr-right">
+    <span id="lastUpdated"></span>
+    <button class="btn-refresh" id="btnRefresh" onclick="loadData()">
+      <svg class="ico" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="1 4 1 10 7 10"/>
+        <path d="M3.51 15a9 9 0 1 0 .49-3.51"/>
+      </svg>
+      Обновить
+    </button>
+  </div>
+</header>
+
+<!-- ── Sheet tabs ────────────────────────────────────────────────────────────── -->
+<div class="tabs-bar"><div id="tabs"></div></div>
+
+<!-- ── Main ──────────────────────────────────────────────────────────────────── -->
+<main class="main">
+  <div class="notice" id="notice" style="display:none">
+    ⚠️ Укажите ID таблицы в <code>config.js</code>. Таблица должна быть открыта для просмотра по ссылке.
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-card" id="filtersCard"></div>
+
+  <!-- KPI -->
+  <div class="kpi-row">
+    <div class="kpi-card" id="kpiAvg"></div>
+    <div class="kpi-card" id="kpiMedian"></div>
+    <div class="kpi-card" id="kpiStddev"></div>
+    <div class="kpi-card" id="kpiMax"></div>
+    <div class="kpi-card" id="kpiMin"></div>
+    <div class="kpi-card" id="kpiRef"></div>
+  </div>
+
+  <!-- Chart -->
+  <div class="chart-card">
+    <div class="chart-hdr">
+      <div>
+        <div class="chart-title" id="chartTitle">—</div>
+        <div class="chart-sub"   id="chartSub"></div>
+      </div>
+      <div class="legend-row" id="legendRow"></div>
+    </div>
+    <div class="chart-wrap" id="chartWrap">
+      <div class="state-msg" id="stateMsg">
+        <div class="spinner spin"></div>
+        <span>Загрузка данных…</span>
+      </div>
+      <canvas id="mainChart" style="display:none"></canvas>
+    </div>
+  </div>
+</main>
+
+<script src="config.js"></script>
+<script>
+// ═══════════════════════════════════════════════════════════════════════════════
+// Constants
+// ═══════════════════════════════════════════════════════════════════════════════
+const AGG         = window.AGGREGATE_LABEL ?? 'UU';
+const PROBE       = ['Свод', 'ДПО', ...(window.EXTRA_SHEETS ?? [])];
+
+// Columns that identify rows (not metrics) by sheet format
+const ID_COLS = {
+  svod:    new Set(['Факультет', 'Тип свода']),
+  dpo:     new Set(['Школа', 'Факультет', 'Программа/курс']),
+  generic: new Set(),
+};
+
+// Format detection signatures
+const FMT_DETECT = {
+  svod: cols => cols.includes('Тип свода'),
+  dpo:  cols => cols.includes('Программа/курс'),
+};
+
+const SCHOOL_COLORS = {
+  МШК:    '#6366f1', СКРИМ:  '#ec4899', МШСИ:   '#f59e0b',
+  ФБМ:    '#10b981', ФКД:    '#3b82f6', ФМС:    '#06b6d4',
+  ФПД:    '#8b5cf6', SOE:    '#ef4444', МШМ:    '#84cc16',
+  Uteens: '#14b8a6', МАРШ:   '#f97316', БВШД:   '#a855f7',
+};
+const FALLBACK_CLR = '#6366f1';
+
+// Disable datalabels globally; opt in per chart
+Chart.defaults.plugins.datalabels = { display: false };
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// State
+// ═══════════════════════════════════════════════════════════════════════════════
+let sheets     = [];   // [{ name, format, data, metrics, labelCol, groupCol, subGroupCol }]
+let activeIdx  = 0;
+let groupFlt   = '';   // Тип свода | Школа | generic group
+let subFlt     = '';   // Факультет (secondary for dpo)
+let metricFlt  = '';
+let chartInst  = null;
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Data loading
+// ═══════════════════════════════════════════════════════════════════════════════
+async function loadData() {
+  const btn = document.getElementById('btnRefresh');
+  btn.classList.add('loading');
+  showState('loading');
+
+  if (!window.SHEET_ID || window.SHEET_ID === 'YOUR_SHEET_ID') {
+    document.getElementById('notice').style.display = 'block';
+    showState('error', 'Укажите SHEET_ID в config.js');
+    btn.classList.remove('loading');
+    return;
+  }
+
+  const results = await Promise.allSettled(PROBE.map(name => fetchAndProcess(name)));
+  sheets = results
+    .filter(r => r.status === 'fulfilled' && r.value)
+    .map(r => r.value);
+
+  if (!sheets.length) {
+    showState('error', 'Не удалось загрузить данные. Убедитесь, что таблица открыта для просмотра.');
+    btn.classList.remove('loading');
+    return;
+  }
+
+  const ts = new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+  document.getElementById('lastUpdated').textContent = `Обновлено в ${ts}`;
+  btn.classList.remove('loading');
+
+  renderTabs();
+  activateSheet(activeIdx < sheets.length ? activeIdx : 0, true);
+}
+
+async function fetchAndProcess(name) {
+  const raw = await fetchSheet(name);
+  if (!raw.length) return null;
+  return processSheet(name, raw);
+}
+
+async function fetchSheet(name) {
+  try {
+    const url = `https://docs.google.com/spreadsheets/d/${window.SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(name)}&headers=1`;
+    const res = await fetch(url);
+    if (!res.ok) return [];
+    return parseGviz(await res.text());
+  } catch { return []; }
+}
+
+function parseGviz(text) {
+  try {
+    const json = JSON.parse(text.replace(/^[^\(]+\(/, '').replace(/\);\s*$/, ''));
+    const cols = json.table.cols.map(c => c.label).filter(Boolean);
+    return json.table.rows
+      .map(row => {
+        const obj = {};
+        row.c.forEach((cell, i) => { if (cols[i]) obj[cols[i]] = cell?.v ?? null; });
+        return obj;
+      })
+      .filter(r => Object.values(r).some(v => v !== null));
+  } catch { return []; }
+}
+
+// ─── Sheet processing ─────────────────────────────────────────────────────────
+function processSheet(name, data) {
+  const cols = Object.keys(data[0] ?? {});
+
+  // Detect format
+  let format = 'generic';
+  for (const [fmt, test] of Object.entries(FMT_DETECT)) {
+    if (test(cols)) { format = fmt; break; }
+  }
+
+  const idSet = ID_COLS[format];
+
+  // Detect numeric metrics from columns
+  const metrics = cols.filter(col => {
+    if (idSet.has(col)) return false;
+    const sample = data.slice(0, 20).map(r => r[col]).filter(v => v !== null);
+    if (!sample.length) return false;
+    return sample.filter(v => !isNaN(parseFloat(v))).length / sample.length >= 0.5;
+  });
+
+  let labelCol, groupCol, subGroupCol;
+  if (format === 'svod') {
+    labelCol = 'Факультет';
+    groupCol = 'Тип свода';
+  } else if (format === 'dpo') {
+    labelCol    = 'Программа/курс';
+    groupCol    = 'Школа';
+    subGroupCol = 'Факультет';
+  } else {
+    labelCol = cols.find(c => !metrics.includes(c)) ?? cols[0];
+    groupCol = null;
+  }
+
+  return { name, format, data, metrics, cols, labelCol, groupCol, subGroupCol };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Tabs
+// ═══════════════════════════════════════════════════════════════════════════════
+function renderTabs() {
+  const bar = document.getElementById('tabs');
+  bar.innerHTML = '';
+  sheets.forEach((sh, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'tab' + (i === activeIdx ? ' active' : '');
+
+    const name = document.createTextNode(sh.name + ' ');
+    btn.appendChild(name);
+
+    const badge = document.createElement('span');
+    badge.className = 'tab-badge ' + sh.format;
+    badge.textContent = { svod: 'Свод', dpo: 'ДПО', generic: 'Таблица' }[sh.format];
+    btn.appendChild(badge);
+
+    btn.onclick = () => activateSheet(i);
+    bar.appendChild(btn);
+  });
+}
+
+function activateSheet(idx, resetMetric = false) {
+  activeIdx = idx;
+  const sh = sheets[idx];
+
+  groupFlt  = '';
+  subFlt    = '';
+  if (resetMetric || !sh.metrics.includes(metricFlt)) {
+    metricFlt = sh.metrics.find(m => m.toLowerCase().includes('csi общий')) ?? sh.metrics[0] ?? '';
+  }
+
+  document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', i === idx));
+  renderFilters();
+  renderChart();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Filters
+// ═══════════════════════════════════════════════════════════════════════════════
+function renderFilters() {
+  const sh  = sheets[activeIdx];
+  const card = document.getElementById('filtersCard');
+  card.innerHTML = '';
+
+  if (sh.format === 'svod') buildSvodFilters(card, sh);
+  else if (sh.format === 'dpo') buildDpoFilters(card, sh);
+  else if (sh.groupCol) buildGenericFilters(card, sh);
+
+  // Metric picker (always last)
+  card.appendChild(mkSep());
+  const mg = mkGroup('Метрика', 'Числовой показатель для отображения на графике и в KPI-карточках');
+  const msel = mkSelect(sh.metrics, metricFlt);
+  msel.onchange = () => { metricFlt = msel.value; renderChart(); };
+  mg.appendChild(msel);
+  card.appendChild(mg);
+}
+
+function buildSvodFilters(card, sh) {
+  const types = unique(sh.data.map(r => r[sh.groupCol]));
+  if (!groupFlt || !types.includes(groupFlt)) groupFlt = types[0] ?? '';
+
+  const g = mkGroup('Тип свода', 'Агрегация данных: Очные/Заочные/Общий и т.д. Выберите нужный срез');
+  const pills = mkEl('div', 'pills');
+
+  types.forEach(t => {
+    const btn = mkEl('button', 'pill' + (t === groupFlt ? ' active' : ''));
+    btn.textContent = t;
+    btn.onclick = () => {
+      groupFlt = t;
+      subFlt   = '';
+      pills.querySelectorAll('.pill').forEach(p => p.classList.toggle('active', p.textContent === t));
+      // Refresh school filter values
+      const sel = document.getElementById('svodFaculty');
+      if (sel) {
+        const rows = sh.data.filter(r => r[sh.groupCol] === t && r[sh.labelCol] !== AGG);
+        const names = unique(rows.map(r => r[sh.labelCol])).sort();
+        sel.innerHTML = '<option value="">Все</option>';
+        names.forEach(n => addOpt(sel, n, n));
+        sel.value = '';
+      }
+      renderChart();
+    };
+    pills.appendChild(btn);
+  });
+
+  g.appendChild(pills);
+  card.appendChild(g);
+
+  // Optionally faculty filter
+  const facRows = sh.data.filter(r => r[sh.groupCol] === groupFlt && r[sh.labelCol] !== AGG);
+  const facNames = unique(facRows.map(r => r[sh.labelCol])).sort();
+  if (facNames.length > 2) {
+    card.appendChild(mkSep());
+    const fg = mkGroup('Факультет', 'Фильтр по конкретному факультету внутри выбранного типа свода');
+    const sel = mkSelect(['', ...facNames], subFlt, ['Все', ...facNames]);
+    sel.id = 'svodFaculty';
+    sel.onchange = () => { subFlt = sel.value; renderChart(); };
+    fg.appendChild(sel);
+    card.appendChild(fg);
+  }
+}
+
+function buildDpoFilters(card, sh) {
+  const schools = unique(sh.data.map(r => r[sh.groupCol])).sort();
+
+  const g = mkGroup('Школа', 'Фильтр по школе ДПО. При выборе «Все школы» отображается агрегация по школам');
+  const sel = mkSelect(['', ...schools], groupFlt, ['Все школы', ...schools]);
+  sel.onchange = () => {
+    groupFlt = sel.value;
+    subFlt   = '';
+    renderFilters(); // rebuild filters to show/hide faculty
+    renderChart();
+  };
+  g.appendChild(sel);
+  card.appendChild(g);
+
+  if (groupFlt) {
+    const rows = sh.data.filter(r => r[sh.groupCol] === groupFlt);
+    const subs = unique(rows.map(r => r[sh.subGroupCol])).sort();
+    if (subs.length > 1) {
+      card.appendChild(mkSep());
+      const fg = mkGroup('Факультет', 'Факультет внутри выбранной школы ДПО');
+      const fsel = mkSelect(['', ...subs], subFlt, ['Все', ...subs]);
+      fsel.onchange = () => { subFlt = fsel.value; renderChart(); };
+      fg.appendChild(fsel);
+      card.appendChild(fg);
+    }
+  }
+}
+
+function buildGenericFilters(card, sh) {
+  const groups = unique(sh.data.map(r => r[sh.groupCol])).sort();
+  const g = mkGroup('Группа');
+  const sel = mkSelect(['', ...groups], groupFlt, ['Все', ...groups]);
+  sel.onchange = () => { groupFlt = sel.value; renderChart(); };
+  g.appendChild(sel);
+  card.appendChild(g);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Chart data computation
+// ═══════════════════════════════════════════════════════════════════════════════
+function getChartData() {
+  const sh     = sheets[activeIdx];
+  const metric = metricFlt;
+  let uuValue  = null;
+  let horizontal = false;
+
+  if (sh.format === 'svod') {
+    let rows = sh.data.filter(r => r[sh.groupCol] === groupFlt);
+
+    // Extract UU benchmark
+    const uuRow = rows.find(r => r[sh.labelCol] === AGG);
+    if (uuRow) uuValue = toNum(uuRow[metric]);
+
+    rows = rows.filter(r => r[sh.labelCol] !== AGG);
+    if (subFlt) rows = rows.filter(r => r[sh.labelCol] === subFlt);
+
+    const points = rows
+      .map(r => ({ label: r[sh.labelCol], value: toNum(r[metric]), key: r[sh.labelCol] }))
+      .filter(p => p.value !== null)
+      .sort((a, b) => b.value - a.value);
+
+    return { points, uuValue, horizontal: false };
+  }
+
+  if (sh.format === 'dpo') {
+    if (!groupFlt) {
+      // Aggregate by Школа
+      const schools = unique(sh.data.map(r => r[sh.groupCol]));
+      const points = schools.map(s => {
+        const vals = sh.data
+          .filter(r => r[sh.groupCol] === s)
+          .map(r => toNum(r[metric]))
+          .filter(v => v !== null);
+        return vals.length ? { label: s, value: avg(vals), key: s } : null;
+      }).filter(Boolean).sort((a, b) => b.value - a.value);
+      return { points, uuValue: null, horizontal: false };
+    }
+
+    let rows = sh.data.filter(r => r[sh.groupCol] === groupFlt);
+    if (subFlt) rows = rows.filter(r => r[sh.subGroupCol] === subFlt);
+
+    const points = rows
+      .map(r => ({ label: r[sh.labelCol], value: toNum(r[metric]), key: r[sh.groupCol] }))
+      .filter(p => p.value !== null)
+      .sort((a, b) => b.value - a.value);
+
+    return { points, uuValue: null, horizontal: true };
+  }
+
+  // Generic
+  let rows = sh.data;
+  if (groupFlt && sh.groupCol) rows = rows.filter(r => r[sh.groupCol] === groupFlt);
+
+  const points = rows
+    .map(r => ({ label: r[sh.labelCol], value: toNum(r[metric]), key: r[sh.labelCol] }))
+    .filter(p => p.value !== null)
+    .sort((a, b) => b.value - a.value);
+
+  return { points, uuValue: null, horizontal: points.length > 8 };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Chart rendering
+// ═══════════════════════════════════════════════════════════════════════════════
+function renderChart() {
+  const sh = sheets[activeIdx];
+  if (!sh || !metricFlt) { showState('empty'); return; }
+
+  const { points, uuValue, horizontal } = getChartData();
+  if (!points.length) { showState('empty'); updateKPIs([], null); return; }
+
+  const values = points.map(p => p.value);
+  updateKPIs(values, uuValue);
+  updateTitle(sh, points.length, uuValue);
+  updateLegend(sh, points, uuValue);
+
+  // Canvas sizing
+  const wrap   = document.getElementById('chartWrap');
+  const canvas = document.getElementById('mainChart');
+  const h = horizontal ? Math.max(420, points.length * 36 + 80) : 420;
+  wrap.style.height  = h + 'px';
+  canvas.style.height = h + 'px';
+  document.getElementById('stateMsg').style.display = 'none';
+  canvas.style.display = 'block';
+
+  // Colors
+  let bgColors, bdColors;
+  const sh_format = sh.format;
+
+  if (sh_format === 'svod' && uuValue !== null) {
+    // Above UU = rich blue, below = faded blue
+    bgColors = values.map(v => v >= uuValue ? 'rgba(37,99,235,0.82)' : 'rgba(37,99,235,0.28)');
+    bdColors = values.map(v => v >= uuValue ? '#1d4ed8'              : '#93c5fd');
+  } else {
+    bgColors = points.map(p => (SCHOOL_COLORS[p.key] ?? FALLBACK_CLR) + 'cc');
+    bdColors = points.map(p =>  SCHOOL_COLORS[p.key] ?? FALLBACK_CLR);
+  }
+
+  // Axis range
+  const minV = Math.min(...values);
+  const maxV = Math.max(...values);
+  const spread = maxV - minV || 1;
+  const refMin  = uuValue !== null ? Math.min(minV, uuValue) : minV;
+  const hasNeg  = values.some(v => v < 0) || (uuValue !== null && uuValue < 0);
+  const axisMin = hasNeg ? undefined : (refMin > 20 ? Math.max(0, Math.floor(refMin - spread * 0.35)) : 0);
+  const axisMax = maxV + spread * 0.28; // headroom for datalabels
+
+  // Annotation: UU benchmark line
+  const annotations = {};
+  if (uuValue !== null) {
+    const axis = horizontal ? 'x' : 'y';
+    annotations.uuLine = {
+      type: 'line',
+      [`${axis}Min`]: uuValue,
+      [`${axis}Max`]: uuValue,
+      borderColor: '#0f172a',
+      borderWidth: 2,
+      borderDash: [8, 4],
+      label: {
+        display: true,
+        content: `${AGG}  ${uuValue.toFixed(1)}`,
+        position: horizontal ? 'end' : 'start',
+        xAdjust: horizontal ? -4 : 0,
+        backgroundColor: '#0f172a',
+        color: '#ffffff',
+        font: { family: 'Onest', size: 11, weight: '600' },
+        padding: { x: 9, y: 5 },
+        borderRadius: 5,
+      }
+    };
+  }
+
+  // Data labels
+  const showLabels = points.length <= 25;
+  const dlConfig = {
+    display: showLabels,
+    anchor: 'end',
+    align: horizontal ? 'right' : 'top',
+    offset: horizontal ? 6 : 1,
+    formatter: v => v.toFixed(1),
+    font: { family: 'Onest', size: 11, weight: '600' },
+    color: (_ctx, idx) => bdColors[idx?.dataIndex ?? 0],
+    clamp: true,
+  };
+
+  if (chartInst) chartInst.destroy();
+
+  chartInst = new Chart(canvas.getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: points.map(p => trunc(p.label, 42)),
+      datasets: [{
+        data: values,
+        backgroundColor: bgColors,
+        borderColor:      bdColors,
+        borderWidth:      1.5,
+        borderRadius: horizontal
+          ? { topLeft: 0, topRight: 5, bottomRight: 5, bottomLeft: 0 }
+          : 5,
+        borderSkipped:    false,
+        barPercentage:    0.7,
+        categoryPercentage: 0.82,
+      }]
+    },
+    options: {
+      indexAxis: horizontal ? 'y' : 'x',
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 320, easing: 'easeInOutQuart' },
+      layout: {
+        padding: {
+          top:   horizontal ? 0  : (showLabels ? 26 : 12),
+          right: horizontal ? 70 : 8,
+          left:  4,
+          bottom: 4,
+        }
+      },
+      plugins: {
+        legend:     { display: false },
+        datalabels: dlConfig,
+        annotation: { annotations },
+        tooltip: {
+          backgroundColor: '#1e293b',
+          titleColor:      '#94a3b8',
+          bodyColor:       '#f1f5f9',
+          padding:          12,
+          cornerRadius:     8,
+          displayColors:    false,
+          titleFont: { family: 'Onest', size: 12, weight: '500' },
+          bodyFont:  { family: 'Onest', size: 13, weight: '600' },
+          callbacks: {
+            title: ctx => ctx[0].label,
+            label: ctx => {
+              const v = ctx.parsed[horizontal ? 'x' : 'y'];
+              const parts = [`  ${v.toFixed(1)}`];
+              if (uuValue !== null) {
+                const d = v - uuValue;
+                parts.push(`  ${d >= 0 ? '▲' : '▼'} ${Math.abs(d).toFixed(1)} vs ${AGG}`);
+              }
+              return parts;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          ...(horizontal ? { min: axisMin, max: axisMax } : {}),
+          grid:   { color: horizontal ? '#f3f4f6' : 'transparent', drawTicks: false },
+          border: { color: '#e5e7eb' },
+          ticks:  {
+            font:         { family: 'Onest', size: 11.5 },
+            color:        '#9ca3af',
+            maxRotation:  0,
+            maxTicksLimit: horizontal ? 6 : 20,
+          }
+        },
+        y: {
+          ...(!horizontal ? { min: axisMin, max: axisMax } : {}),
+          grid:   { color: horizontal ? 'transparent' : '#f1f5f9', drawTicks: false },
+          border: { display: false },
+          ticks:  {
+            font:  { family: 'Onest', size: 12 },
+            color: '#374151',
+          }
+        }
+      }
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// KPI cards
+// ═══════════════════════════════════════════════════════════════════════════════
+function updateKPIs(values, uuValue) {
+  const f  = v => (v !== null && v !== undefined) ? v.toFixed(1) : '—';
+  const a   = values.length ? avg(values)    : null;
+  const med = values.length ? median(values) : null;
+  const sd  = values.length ? stddev(values) : null;
+  const mx  = values.length ? Math.max(...values) : null;
+  const mn  = values.length ? Math.min(...values) : null;
+
+  setKpi('kpiAvg',    f(a),   'Среднее',          '',                           'Среднее арифметическое значений всех отображаемых объектов');
+  setKpi('kpiMedian', f(med), 'Медиана',           '',                           '50% объектов выше этого значения, 50% ниже. Устойчива к выбросам');
+  setKpi('kpiStddev', f(sd),  'Стандартное откл.', '',                           'Мера разброса: чем меньше, тем однороднее показатели объектов');
+  setKpi('kpiMax',    f(mx),  'Максимум',          'green',                      'Наибольшее значение среди отображаемых объектов');
+  setKpi('kpiMin',    f(mn),  'Минимум',           mn !== null && mn < 0 ? 'red' : '', 'Наименьшее значение среди отображаемых объектов');
+
+  if (uuValue !== null) {
+    const delta = a !== null ? a - uuValue : null;
+    const badgeHtml = delta !== null
+      ? `<div class="kpi-ref-badge ${delta >= 0 ? 'up' : 'down'}">${delta >= 0 ? '+' : ''}${delta.toFixed(1)} vs ср.</div>`
+      : '';
+    document.getElementById('kpiRef').innerHTML = `
+      <div class="kpi-lbl">UU
+        <span class="hint-icon" data-tip="Эталонное значение UU — benchmark-линия на графике. Сравнивает средние факультетов с общим показателем университета">i</span>
+      </div>
+      <div class="kpi-val blue">${f(uuValue)}</div>
+      ${badgeHtml}
+    `;
+  } else {
+    setKpi('kpiRef', values.length.toString(), 'Объектов', '', 'Количество объектов в текущем выборе фильтров');
+  }
+}
+
+function setKpi(id, val, lbl, cls, hint) {
+  const hintHtml = hint
+    ? `<span class="hint-icon" data-tip="${hint}">i</span>`
+    : '';
+  document.getElementById(id).innerHTML =
+    `<div class="kpi-lbl"><span>${lbl}</span>${hintHtml}</div><div class="kpi-val ${cls}">${val}</div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Title & legend
+// ═══════════════════════════════════════════════════════════════════════════════
+function updateTitle(sh, count, uuValue) {
+  document.getElementById('chartTitle').textContent = metricFlt;
+  const parts = [sh.name];
+  if (groupFlt) parts.push(groupFlt);
+  if (subFlt)   parts.push(subFlt);
+  parts.push(`${count} объект${plRu(count)}`);
+  if (uuValue !== null) parts.push(`${AGG}: ${uuValue.toFixed(1)}`);
+  document.getElementById('chartSub').textContent = parts.join('  ·  ');
+}
+
+function updateLegend(sh, points, uuValue) {
+  const row = document.getElementById('legendRow');
+  row.innerHTML = '';
+
+  if (sh.format === 'svod' && uuValue !== null) {
+    // Above / Below UU legend
+    const above = mkEl('div', 'legend-item');
+    const d1 = mkEl('div', 'legend-dot'); d1.style.background = 'rgba(37,99,235,0.82)';
+    above.appendChild(d1); above.appendChild(document.createTextNode('Выше UU'));
+    row.appendChild(above);
+
+    const below = mkEl('div', 'legend-item');
+    const d2 = mkEl('div', 'legend-dot'); d2.style.background = 'rgba(37,99,235,0.28)';
+    below.appendChild(d2); below.appendChild(document.createTextNode('Ниже UU'));
+    row.appendChild(below);
+  } else if (!groupFlt || sh.format !== 'dpo') {
+    // School color legend for aggregate view
+    const shown = unique(points.map(p => p.key)).slice(0, 8);
+    shown.forEach(key => {
+      const clr = SCHOOL_COLORS[key] ?? FALLBACK_CLR;
+      const item = mkEl('div', 'legend-item');
+      const dot  = mkEl('div', 'legend-dot'); dot.style.background = clr;
+      item.appendChild(dot);
+      item.appendChild(document.createTextNode(key));
+      row.appendChild(item);
+    });
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// State / loading
+// ═══════════════════════════════════════════════════════════════════════════════
+function showState(type, msg) {
+  document.getElementById('mainChart').style.display = 'none';
+  const el = document.getElementById('stateMsg');
+  el.style.display = 'flex';
+  if (type === 'loading') {
+    el.innerHTML = '<div class="spinner spin"></div><span>Загрузка данных…</span>';
+  } else if (type === 'error') {
+    el.innerHTML = `<span class="err-text">⚠ ${msg}</span>`;
+  } else {
+    el.innerHTML = '<span style="color:var(--muted)">Нет данных для текущих фильтров</span>';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// DOM helpers
+// ═══════════════════════════════════════════════════════════════════════════════
+function mkEl(tag, cls) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  return e;
+}
+function mkGroup(labelText, hint) {
+  const g = mkEl('div', 'filter-group');
+  const l = mkEl('div', 'filter-label');
+  l.textContent = labelText;
+  if (hint) {
+    const h = mkEl('span', 'hint-icon');
+    h.setAttribute('data-tip', hint);
+    h.textContent = 'i';
+    l.appendChild(h);
+  }
+  g.appendChild(l);
+  return g;
+}
+function mkSep() { return mkEl('div', 'sep'); }
+function mkSelect(vals, current, labels) {
+  const sel = document.createElement('select');
+  vals.forEach((v, i) => addOpt(sel, v, labels ? labels[i] : v, v === current));
+  return sel;
+}
+function addOpt(sel, val, text, selected = false) {
+  const o = document.createElement('option');
+  o.value = val; o.textContent = text; o.selected = selected;
+  sel.appendChild(o);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Utils
+// ═══════════════════════════════════════════════════════════════════════════════
+const toNum  = v => (v === null || v === undefined || v === '') ? null : (isNaN(+v) ? null : +v);
+const avg    = arr => arr.reduce((s, v) => s + v, 0) / arr.length;
+const median = arr => {
+  const s = [...arr].sort((a, b) => a - b);
+  const m = Math.floor(s.length / 2);
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+};
+const stddev = arr => {
+  const m = avg(arr);
+  return Math.sqrt(arr.reduce((s, v) => s + (v - m) ** 2, 0) / arr.length);
+};
+const unique = arr => [...new Set(arr.filter(Boolean))];
+const trunc  = (s, n) => s && s.length > n ? s.slice(0, n - 1) + '…' : (s ?? '');
+const plRu   = n => n === 1 ? '' : n >= 2 && n <= 4 ? 'а' : 'ов';
+
+// ─── Boot ─────────────────────────────────────────────────────────────────────
+loadData();
+</script>
+</body>
+</html>
