@@ -1316,12 +1316,13 @@ const SENTIMENTS = [
   { key: 'пожелание',       label: 'Пожелание',     color: '#2563eb', bg: '#dbeafe', border: '#2563eb' },
 ];
 
-let activeView    = 'metrics';
-let commentsCache = {};
-let cSchoolFlt    = '';
-let cProgramFlt   = '';
-let cSentimentFlt = '';
-let cTopicFlt     = '';
+let activeView        = 'metrics';
+let commentsCache     = {};
+let currentCommentRows = [];   // module-level — единственный источник данных для фильтров
+let cSchoolFlt        = '';
+let cProgramFlt       = '';
+let cSentimentFlt     = '';
+let cTopicFlt         = '';
 
 function hasComments(sh) {
   return !!(window.COMMENTS_CONFIG?.[sh.name]);
@@ -1368,28 +1369,37 @@ async function switchView(view) {
     mv.style.display = 'none'; cv.style.display = '';
     cSchoolFlt = ''; cProgramFlt = ''; cSentimentFlt = ''; cTopicFlt = '';
     cv.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;gap:12px;padding:60px 0;color:var(--muted);font-size:13.5px"><div class="spinner spin"></div>Загрузка комментариев…</div>';
-    const rows = await loadComments(sheets[activeIdx].name);
-    renderCommentsView(rows);
+    currentCommentRows = await loadComments(sheets[activeIdx].name);
+    renderCommentsView();
   }
 }
 
 // ── Comments view ──────────────────────────────────────────────────────────────
-function renderCommentsView(allRows) {
+// Не принимает параметр — всегда работает с currentCommentRows.
+// Все обработчики фильтров обновляют состояние и вызывают эту функцию
+// через setTimeout, чтобы не разрушать DOM во время обработки события.
+function renderCommentsView() {
   const el = document.getElementById('commentsView');
-  if (!allRows.length) {
+  if (!currentCommentRows.length) {
     el.innerHTML = '<div class="no-comments">Нет данных по комментариям</div>';
     return;
   }
-  const filtered = getFilteredComments(allRows);
+  const filtered = getFilteredComments();
   el.innerHTML = '';
   el.appendChild(buildCommentKPIs(filtered));
-  el.appendChild(buildCommentFilters(allRows));
+  el.appendChild(buildCommentFilters());
   el.appendChild(buildTopicBreakdown(filtered));
   el.appendChild(buildCommentList(filtered));
 }
 
-function getFilteredComments(rows) {
-  let r = rows;
+// Откладывает перерисовку на следующий тик — критично для Safari:
+// предотвращает уничтожение DOM-элемента-источника события внутри его же обработчика.
+function scheduleRenderComments() {
+  setTimeout(renderCommentsView, 0);
+}
+
+function getFilteredComments() {
+  let r = currentCommentRows;
   if (cSchoolFlt)    r = r.filter(x => x['Школа']       === cSchoolFlt);
   if (cProgramFlt)   r = r.filter(x => x['Программа']   === cProgramFlt);
   if (cSentimentFlt) r = r.filter(x => (x['Тональность']||'').toLowerCase() === cSentimentFlt);
@@ -1423,24 +1433,24 @@ function buildCommentKPIs(rows) {
 }
 
 // ── Filters ────────────────────────────────────────────────────────────────────
-function buildCommentFilters(allRows) {
+function buildCommentFilters() {
   const card = mkEl('div', 'filters-card');
 
   // Школа
-  const schools = unique(allRows.map(r => r['Школа'])).sort();
+  const schools = unique(currentCommentRows.map(r => r['Школа'])).sort();
   const sg = mkGroup('Школа');
   const ssel = mkSelect(['', ...schools], cSchoolFlt, ['Все школы', ...schools]);
-  ssel.onchange = () => { cSchoolFlt = ssel.value; cProgramFlt = ''; renderCommentsView(allRows); };
+  ssel.onchange = () => { cSchoolFlt = ssel.value; cProgramFlt = ''; scheduleRenderComments(); };
   sg.appendChild(ssel); card.appendChild(sg);
 
   // Программа
-  const progSrc = cSchoolFlt ? allRows.filter(r => r['Школа'] === cSchoolFlt) : allRows;
+  const progSrc = cSchoolFlt ? currentCommentRows.filter(r => r['Школа'] === cSchoolFlt) : currentCommentRows;
   const progs = unique(progSrc.map(r => r['Программа'])).sort();
   if (progs.length > 1) {
     card.appendChild(mkSep());
     const pg = mkGroup('Программа');
     const psel = mkSelect(['', ...progs], cProgramFlt, ['Все программы', ...progs]);
-    psel.onchange = () => { cProgramFlt = psel.value; renderCommentsView(allRows); };
+    psel.onchange = () => { cProgramFlt = psel.value; scheduleRenderComments(); };
     pg.appendChild(psel); card.appendChild(pg);
   }
 
@@ -1451,7 +1461,7 @@ function buildCommentFilters(allRows) {
   [{ key: '', label: 'Все' }, ...SENTIMENTS.map(s => ({ key: s.key, label: s.label }))].forEach(({ key, label }) => {
     const btn = mkEl('button', 'pill' + (cSentimentFlt === key ? ' active' : ''));
     btn.textContent = label;
-    btn.onclick = () => { cSentimentFlt = key; renderCommentsView(allRows); };
+    btn.onclick = () => { cSentimentFlt = key; scheduleRenderComments(); };
     sentPills.appendChild(btn);
   });
   sentG.appendChild(sentPills); card.appendChild(sentG);
@@ -1463,7 +1473,7 @@ function buildCommentFilters(allRows) {
   [{ key: '', label: 'Все темы' }, ...TOPICS.map(t => ({ key: t.key, label: t.label }))].forEach(({ key, label }) => {
     const btn = mkEl('button', 'pill' + (cTopicFlt === key ? ' active' : ''));
     btn.textContent = label;
-    btn.onclick = () => { cTopicFlt = key; renderCommentsView(allRows); };
+    btn.onclick = () => { cTopicFlt = key; scheduleRenderComments(); };
     topPills.appendChild(btn);
   });
   topG.appendChild(topPills); card.appendChild(topG);
@@ -1478,35 +1488,30 @@ function buildTopicBreakdown(rows) {
   title.textContent = 'Разбивка по темам и тональности';
   card.appendChild(title);
 
-  // Compute per-topic totals for bar widths
   const topicTotals = TOPICS.map(t => rows.filter(r => +r[t.key] === 1).length);
   const maxTotal = Math.max(...topicTotals, 1);
 
   const table = document.createElement('table');
   table.className = 'breakdown-table';
 
-  // Header
   const thead = table.createTHead();
   const hrow  = thead.insertRow();
   hrow.innerHTML = '<th>Тема</th>'
     + SENTIMENTS.map(s => `<th style="color:${s.color}">${s.label}</th>`).join('')
     + '<th style="color:var(--muted)">Итого</th>';
 
-  // Body
   const tbody = table.createTBody();
-  TOPICS.forEach((t, ti) => {
+  TOPICS.forEach(t => {
     const topicRows = rows.filter(r => +r[t.key] === 1);
     const total = topicRows.length;
     const pct   = Math.round(total / maxTotal * 100);
     const tr    = tbody.insertRow();
 
-    // Topic name cell with mini bar
     const tdName = tr.insertCell();
     tdName.innerHTML = `
       <div class="topic-name">${t.label}</div>
       <div class="topic-bar-wrap"><div class="topic-bar" style="width:${pct}%"></div></div>`;
 
-    // Sentiment count cells
     SENTIMENTS.forEach(s => {
       const cnt = topicRows.filter(r => (r['Тональность']||'').toLowerCase() === s.key).length;
       const td  = tr.insertCell();
@@ -1515,7 +1520,6 @@ function buildTopicBreakdown(rows) {
         : `<span style="color:var(--border)">—</span>`;
     });
 
-    // Total cell
     const tdTotal = tr.insertCell();
     tdTotal.innerHTML = `<strong style="font-size:13px">${total}</strong>`;
   });
@@ -1540,21 +1544,20 @@ function buildCommentList(rows) {
     return card;
   }
 
-  // Sort: negative first, then mixed, then wishes, then positive
   const ORDER = { 'отрицательный': 0, 'смешанный отзыв': 1, 'пожелание': 2, 'положительный': 3 };
-  const sorted = [...rows].sort((a, b) => {
-    const sa = ORDER[(a['Тональность']||'').toLowerCase()] ?? 9;
-    const sb = ORDER[(b['Тональность']||'').toLowerCase()] ?? 9;
-    return sa - sb;
-  });
+  const sorted = [...rows].sort((a, b) =>
+    (ORDER[(a['Тональность']||'').toLowerCase()] ?? 9) -
+    (ORDER[(b['Тональность']||'').toLowerCase()] ?? 9)
+  );
 
   const list = mkEl('div', 'comment-list');
   sorted.forEach(r => {
     const sent  = (r['Тональность']||'').toLowerCase();
-    const sConf = SENTIMENTS.find(s => s.key === sent) ?? { color: '#6b7280', bg: '#f3f4f6', border: '#d1d5db', label: r['Тональность'] || '—' };
+    const sConf = SENTIMENTS.find(s => s.key === sent)
+      ?? { color: '#6b7280', bg: '#f3f4f6', border: '#d1d5db', label: r['Тональность'] || '—' };
     const rowTopics = TOPICS.filter(t => +r[t.key] === 1);
 
-    const cc = mkEl('div', 'comment-card');
+    const cc   = mkEl('div', 'comment-card');
     cc.style.borderLeftColor = sConf.border;
 
     const meta = mkEl('div', 'comment-meta');
