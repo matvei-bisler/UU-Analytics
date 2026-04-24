@@ -382,17 +382,157 @@
     .spin { animation: spin .75s linear infinite; }
     .err-text { color: var(--red); }
 
+    /* ── Sub-navigation (Метрики / Комментарии) ─────────────── */
+    .sub-nav {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 0 28px;
+      display: flex;
+      gap: 0;
+    }
+    .subnav-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 38px;
+      padding: 0 14px;
+      border: none;
+      border-bottom: 2px solid transparent;
+      background: none;
+      font: 500 12.5px 'Onest', sans-serif;
+      color: var(--muted);
+      cursor: pointer;
+      transition: color .15s, border-color .15s;
+      margin-bottom: -1px;
+    }
+    .subnav-btn:hover { color: var(--text); }
+    .subnav-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+    /* ── Comments layout ─────────────────────────────────────── */
+    .comments-view { display: flex; flex-direction: column; gap: 18px; }
+    .comment-kpi-row {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 14px;
+    }
+
+    /* ── Breakdown table ─────────────────────────────────────── */
+    .breakdown-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px 24px 20px;
+      box-shadow: var(--shadow-sm);
+    }
+    .breakdown-title {
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: -.02em;
+      color: var(--text);
+      margin-bottom: 18px;
+    }
+    .breakdown-table { width: 100%; border-collapse: collapse; }
+    .breakdown-table th {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: var(--muted);
+      padding: 0 10px 10px;
+      text-align: center;
+      white-space: nowrap;
+    }
+    .breakdown-table th:first-child { text-align: left; padding-left: 0; }
+    .breakdown-table td {
+      padding: 10px 10px;
+      border-top: 1px solid var(--border);
+      font-size: 13px;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+    }
+    .breakdown-table td:first-child { text-align: left; padding-left: 0; }
+    .breakdown-table tbody tr:hover td { background: var(--light); }
+    .topic-count {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 34px;
+      height: 24px;
+      border-radius: 5px;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 0 8px;
+    }
+    .topic-name { font-weight: 500; font-size: 12.5px; color: var(--text); }
+    .topic-bar-wrap {
+      background: var(--border);
+      border-radius: 2px;
+      height: 3px;
+      margin-top: 5px;
+      overflow: hidden;
+    }
+    .topic-bar { height: 100%; border-radius: 2px; background: var(--primary); opacity: .45; }
+
+    /* ── Comment list ────────────────────────────────────────── */
+    .comment-list-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px 24px 20px;
+      box-shadow: var(--shadow-sm);
+    }
+    .comment-list-hdr {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .comment-list-title { font-size: 14px; font-weight: 600; letter-spacing: -.02em; }
+    .comment-list { display: flex; flex-direction: column; gap: 10px; }
+    .comment-card {
+      background: var(--light);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 13px 16px;
+      border-left-width: 3px;
+    }
+    .comment-meta {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-bottom: 8px;
+    }
+    .comment-program { font-size: 12px; font-weight: 600; color: var(--text); }
+    .comment-school  { font-size: 11.5px; color: var(--muted); }
+    .sentiment-badge {
+      font-size: 10.5px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+    .topic-tag {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 4px;
+      background: var(--border);
+      color: var(--muted);
+    }
+    .comment-text { font-size: 13px; line-height: 1.6; color: var(--text); }
+    .no-comments { color: var(--muted); font-size: 13px; padding: 24px 0; text-align: center; }
+
     /* ── Responsive ──────────────────────────────────────────── */
     @media (max-width: 1100px) {
-      .kpi-row { grid-template-columns: repeat(3, 1fr); }
+      .kpi-row, .comment-kpi-row { grid-template-columns: repeat(3, 1fr); }
     }
     @media (max-width: 800px) {
-      .kpi-row { grid-template-columns: repeat(2, 1fr); }
-      .header, .tabs-bar { padding: 0 16px; }
+      .kpi-row, .comment-kpi-row { grid-template-columns: repeat(2, 1fr); }
+      .header, .tabs-bar, .sub-nav { padding: 0 16px; }
       .main { padding: 16px 12px 40px; }
     }
     @media (max-width: 480px) {
-      .kpi-row { grid-template-columns: 1fr 1fr; }
+      .kpi-row, .comment-kpi-row { grid-template-columns: 1fr 1fr; }
       .kpi-val { font-size: 22px; }
     }
   </style>
@@ -405,9 +545,10 @@
   <div class="hdr-right">
     <span id="lastUpdated"></span>
     <button class="btn-refresh" id="btnRefresh" onclick="loadData()">
-      <svg class="ico" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="1 4 1 10 7 10"/>
-        <path d="M3.51 15a9 9 0 1 0 .49-3.51"/>
+      <svg class="ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M23 4v6h-6"/>
+        <path d="M1 20v-6h6"/>
+        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
       </svg>
       Обновить
     </button>
@@ -417,42 +558,51 @@
 <!-- ── Sheet tabs ────────────────────────────────────────────────────────────── -->
 <div class="tabs-bar"><div id="tabs"></div></div>
 
+<!-- ── Sub-navigation ────────────────────────────────────────────────────────── -->
+<div class="sub-nav" id="subNav" style="display:none"></div>
+
 <!-- ── Main ──────────────────────────────────────────────────────────────────── -->
 <main class="main">
   <div class="notice" id="notice" style="display:none">
     ⚠️ Укажите ID таблицы в <code>config.js</code>. Таблица должна быть открыта для просмотра по ссылке.
   </div>
 
-  <!-- Filters -->
-  <div class="filters-card" id="filtersCard"></div>
+  <!-- Metrics view -->
+  <div id="metricsView">
+    <!-- Filters -->
+    <div class="filters-card" id="filtersCard"></div>
 
-  <!-- KPI -->
-  <div class="kpi-row">
-    <div class="kpi-card" id="kpiAvg"></div>
-    <div class="kpi-card" id="kpiMedian"></div>
-    <div class="kpi-card" id="kpiStddev"></div>
-    <div class="kpi-card" id="kpiMax"></div>
-    <div class="kpi-card" id="kpiMin"></div>
-    <div class="kpi-card" id="kpiRef"></div>
+    <!-- KPI -->
+    <div class="kpi-row">
+      <div class="kpi-card" id="kpiAvg"></div>
+      <div class="kpi-card" id="kpiMedian"></div>
+      <div class="kpi-card" id="kpiStddev"></div>
+      <div class="kpi-card" id="kpiMax"></div>
+      <div class="kpi-card" id="kpiMin"></div>
+      <div class="kpi-card" id="kpiRef"></div>
+    </div>
+
+    <!-- Chart -->
+    <div class="chart-card">
+      <div class="chart-hdr">
+        <div>
+          <div class="chart-title" id="chartTitle">—</div>
+          <div class="chart-sub"   id="chartSub"></div>
+        </div>
+        <div class="legend-row" id="legendRow"></div>
+      </div>
+      <div class="chart-wrap" id="chartWrap">
+        <div class="state-msg" id="stateMsg">
+          <div class="spinner spin"></div>
+          <span>Загрузка данных…</span>
+        </div>
+        <canvas id="mainChart" style="display:none"></canvas>
+      </div>
+    </div>
   </div>
 
-  <!-- Chart -->
-  <div class="chart-card">
-    <div class="chart-hdr">
-      <div>
-        <div class="chart-title" id="chartTitle">—</div>
-        <div class="chart-sub"   id="chartSub"></div>
-      </div>
-      <div class="legend-row" id="legendRow"></div>
-    </div>
-    <div class="chart-wrap" id="chartWrap">
-      <div class="state-msg" id="stateMsg">
-        <div class="spinner spin"></div>
-        <span>Загрузка данных…</span>
-      </div>
-      <canvas id="mainChart" style="display:none"></canvas>
-    </div>
-  </div>
+  <!-- Comments view -->
+  <div id="commentsView" class="comments-view" style="display:none"></div>
 </main>
 
 <script src="config.js"></script>
@@ -639,7 +789,13 @@ function activateSheet(idx, resetMetric = false) {
     metricFlt = sh.metrics.find(m => m.toLowerCase().includes('csi общий')) ?? sh.metrics[0] ?? '';
   }
 
+  // Reset to metrics view on tab switch
+  activeView = 'metrics';
+  document.getElementById('metricsView').style.display  = '';
+  document.getElementById('commentsView').style.display = 'none';
+
   document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', i === idx));
+  renderSubNav(sh);
   renderFilters();
   renderChart();
 }
@@ -1142,6 +1298,286 @@ const stddev = arr => {
 const unique = arr => [...new Set(arr.filter(Boolean))];
 const trunc  = (s, n) => s && s.length > n ? s.slice(0, n - 1) + '…' : (s ?? '');
 const plRu   = n => n === 1 ? '' : n >= 2 && n <= 4 ? 'а' : 'ов';
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Comments
+// ═══════════════════════════════════════════════════════════════════════════════
+const TOPICS = [
+  { key: 'Содержание программы', label: 'Содержание программы' },
+  { key: 'Куратор',              label: 'Куратор'              },
+  { key: 'Преподаватель',        label: 'Преподаватель'        },
+  { key: 'Координатор',          label: 'Координатор'          },
+  { key: 'Среда',                label: 'Среда'                },
+];
+const SENTIMENTS = [
+  { key: 'положительный',   label: 'Положительный', color: '#16a34a', bg: '#dcfce7', border: '#16a34a' },
+  { key: 'отрицательный',   label: 'Отрицательный', color: '#dc2626', bg: '#fee2e2', border: '#dc2626' },
+  { key: 'смешанный отзыв', label: 'Смешанный',     color: '#d97706', bg: '#fef3c7', border: '#d97706' },
+  { key: 'пожелание',       label: 'Пожелание',     color: '#2563eb', bg: '#dbeafe', border: '#2563eb' },
+];
+
+let activeView    = 'metrics';
+let commentsCache = {};
+let cSchoolFlt    = '';
+let cProgramFlt   = '';
+let cSentimentFlt = '';
+let cTopicFlt     = '';
+
+function hasComments(sh) {
+  return !!(window.COMMENTS_CONFIG?.[sh.name]);
+}
+
+async function loadComments(sheetName) {
+  if (commentsCache[sheetName]) return commentsCache[sheetName];
+  const cfg = window.COMMENTS_CONFIG?.[sheetName];
+  if (!cfg) return [];
+  try {
+    const url = `https://docs.google.com/spreadsheets/d/${cfg.sheetId}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(cfg.sheetName ?? sheetName)}&headers=1`;
+    const res = await fetch(url);
+    if (!res.ok) return [];
+    const rows = parseGviz(await res.text());
+    commentsCache[sheetName] = rows;
+    return rows;
+  } catch { return []; }
+}
+
+// ── Sub-nav ────────────────────────────────────────────────────────────────────
+function renderSubNav(sh) {
+  const el = document.getElementById('subNav');
+  if (!hasComments(sh)) { el.style.display = 'none'; return; }
+  el.style.display = 'flex';
+  el.innerHTML = '';
+  [{ view: 'metrics', label: 'Метрики' }, { view: 'comments', label: 'Комментарии' }]
+    .forEach(({ view, label }) => {
+      const btn = document.createElement('button');
+      btn.className = 'subnav-btn' + (activeView === view ? ' active' : '');
+      btn.textContent = label;
+      btn.onclick = () => switchView(view);
+      el.appendChild(btn);
+    });
+}
+
+async function switchView(view) {
+  activeView = view;
+  renderSubNav(sheets[activeIdx]);
+  const mv = document.getElementById('metricsView');
+  const cv = document.getElementById('commentsView');
+  if (view === 'metrics') {
+    mv.style.display = ''; cv.style.display = 'none';
+  } else {
+    mv.style.display = 'none'; cv.style.display = '';
+    cSchoolFlt = ''; cProgramFlt = ''; cSentimentFlt = ''; cTopicFlt = '';
+    cv.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;gap:12px;padding:60px 0;color:var(--muted);font-size:13.5px"><div class="spinner spin"></div>Загрузка комментариев…</div>';
+    const rows = await loadComments(sheets[activeIdx].name);
+    renderCommentsView(rows);
+  }
+}
+
+// ── Comments view ──────────────────────────────────────────────────────────────
+function renderCommentsView(allRows) {
+  const el = document.getElementById('commentsView');
+  if (!allRows.length) {
+    el.innerHTML = '<div class="no-comments">Нет данных по комментариям</div>';
+    return;
+  }
+  const filtered = getFilteredComments(allRows);
+  el.innerHTML = '';
+  el.appendChild(buildCommentKPIs(filtered));
+  el.appendChild(buildCommentFilters(allRows));
+  el.appendChild(buildTopicBreakdown(filtered));
+  el.appendChild(buildCommentList(filtered));
+}
+
+function getFilteredComments(rows) {
+  let r = rows;
+  if (cSchoolFlt)    r = r.filter(x => x['Школа']       === cSchoolFlt);
+  if (cProgramFlt)   r = r.filter(x => x['Программа']   === cProgramFlt);
+  if (cSentimentFlt) r = r.filter(x => (x['Тональность']||'').toLowerCase() === cSentimentFlt);
+  if (cTopicFlt)     r = r.filter(x => +x[cTopicFlt]    === 1);
+  return r;
+}
+
+// ── KPI row ────────────────────────────────────────────────────────────────────
+function buildCommentKPIs(rows) {
+  const total = rows.length;
+  const counts = Object.fromEntries(SENTIMENTS.map(s => [s.key, 0]));
+  rows.forEach(r => { const t = (r['Тональность']||'').toLowerCase(); if (t in counts) counts[t]++; });
+
+  const grid = mkEl('div', 'comment-kpi-row');
+
+  const totalCard = mkEl('div', 'kpi-card');
+  totalCard.innerHTML = `<div class="kpi-lbl"><span>Комментариев</span></div><div class="kpi-val">${total}</div>`;
+  grid.appendChild(totalCard);
+
+  SENTIMENTS.forEach(s => {
+    const cnt = counts[s.key];
+    const pct = total > 0 ? Math.round(cnt / total * 100) : 0;
+    const card = mkEl('div', 'kpi-card');
+    card.innerHTML = `
+      <div class="kpi-lbl"><span>${s.label}</span></div>
+      <div class="kpi-val" style="color:${s.color}">${cnt}</div>
+      <div class="kpi-sub">${pct}%</div>`;
+    grid.appendChild(card);
+  });
+  return grid;
+}
+
+// ── Filters ────────────────────────────────────────────────────────────────────
+function buildCommentFilters(allRows) {
+  const card = mkEl('div', 'filters-card');
+
+  // Школа
+  const schools = unique(allRows.map(r => r['Школа'])).sort();
+  const sg = mkGroup('Школа');
+  const ssel = mkSelect(['', ...schools], cSchoolFlt, ['Все школы', ...schools]);
+  ssel.onchange = () => { cSchoolFlt = ssel.value; cProgramFlt = ''; renderCommentsView(allRows); };
+  sg.appendChild(ssel); card.appendChild(sg);
+
+  // Программа
+  const progSrc = cSchoolFlt ? allRows.filter(r => r['Школа'] === cSchoolFlt) : allRows;
+  const progs = unique(progSrc.map(r => r['Программа'])).sort();
+  if (progs.length > 1) {
+    card.appendChild(mkSep());
+    const pg = mkGroup('Программа');
+    const psel = mkSelect(['', ...progs], cProgramFlt, ['Все программы', ...progs]);
+    psel.onchange = () => { cProgramFlt = psel.value; renderCommentsView(allRows); };
+    pg.appendChild(psel); card.appendChild(pg);
+  }
+
+  // Тональность (pills)
+  card.appendChild(mkSep());
+  const sentG = mkGroup('Тональность');
+  const sentPills = mkEl('div', 'pills');
+  [{ key: '', label: 'Все' }, ...SENTIMENTS.map(s => ({ key: s.key, label: s.label }))].forEach(({ key, label }) => {
+    const btn = mkEl('button', 'pill' + (cSentimentFlt === key ? ' active' : ''));
+    btn.textContent = label;
+    btn.onclick = () => { cSentimentFlt = key; renderCommentsView(allRows); };
+    sentPills.appendChild(btn);
+  });
+  sentG.appendChild(sentPills); card.appendChild(sentG);
+
+  // Тема (pills)
+  card.appendChild(mkSep());
+  const topG = mkGroup('Тема');
+  const topPills = mkEl('div', 'pills');
+  [{ key: '', label: 'Все темы' }, ...TOPICS.map(t => ({ key: t.key, label: t.label }))].forEach(({ key, label }) => {
+    const btn = mkEl('button', 'pill' + (cTopicFlt === key ? ' active' : ''));
+    btn.textContent = label;
+    btn.onclick = () => { cTopicFlt = key; renderCommentsView(allRows); };
+    topPills.appendChild(btn);
+  });
+  topG.appendChild(topPills); card.appendChild(topG);
+
+  return card;
+}
+
+// ── Breakdown table ────────────────────────────────────────────────────────────
+function buildTopicBreakdown(rows) {
+  const card = mkEl('div', 'breakdown-card');
+  const title = mkEl('div', 'breakdown-title');
+  title.textContent = 'Разбивка по темам и тональности';
+  card.appendChild(title);
+
+  // Compute per-topic totals for bar widths
+  const topicTotals = TOPICS.map(t => rows.filter(r => +r[t.key] === 1).length);
+  const maxTotal = Math.max(...topicTotals, 1);
+
+  const table = document.createElement('table');
+  table.className = 'breakdown-table';
+
+  // Header
+  const thead = table.createTHead();
+  const hrow  = thead.insertRow();
+  hrow.innerHTML = '<th>Тема</th>'
+    + SENTIMENTS.map(s => `<th style="color:${s.color}">${s.label}</th>`).join('')
+    + '<th style="color:var(--muted)">Итого</th>';
+
+  // Body
+  const tbody = table.createTBody();
+  TOPICS.forEach((t, ti) => {
+    const topicRows = rows.filter(r => +r[t.key] === 1);
+    const total = topicRows.length;
+    const pct   = Math.round(total / maxTotal * 100);
+    const tr    = tbody.insertRow();
+
+    // Topic name cell with mini bar
+    const tdName = tr.insertCell();
+    tdName.innerHTML = `
+      <div class="topic-name">${t.label}</div>
+      <div class="topic-bar-wrap"><div class="topic-bar" style="width:${pct}%"></div></div>`;
+
+    // Sentiment count cells
+    SENTIMENTS.forEach(s => {
+      const cnt = topicRows.filter(r => (r['Тональность']||'').toLowerCase() === s.key).length;
+      const td  = tr.insertCell();
+      td.innerHTML = cnt > 0
+        ? `<span class="topic-count" style="background:${s.bg};color:${s.color}">${cnt}</span>`
+        : `<span style="color:var(--border)">—</span>`;
+    });
+
+    // Total cell
+    const tdTotal = tr.insertCell();
+    tdTotal.innerHTML = `<strong style="font-size:13px">${total}</strong>`;
+  });
+
+  card.appendChild(table);
+  return card;
+}
+
+// ── Comment list ───────────────────────────────────────────────────────────────
+function buildCommentList(rows) {
+  const card = mkEl('div', 'comment-list-card');
+  const hdr  = mkEl('div', 'comment-list-hdr');
+  const ttl  = mkEl('div', 'comment-list-title');
+  ttl.textContent = `Комментарии (${rows.length})`;
+  hdr.appendChild(ttl);
+  card.appendChild(hdr);
+
+  if (!rows.length) {
+    const empty = mkEl('div', 'no-comments');
+    empty.textContent = 'Нет комментариев для текущих фильтров';
+    card.appendChild(empty);
+    return card;
+  }
+
+  // Sort: negative first, then mixed, then wishes, then positive
+  const ORDER = { 'отрицательный': 0, 'смешанный отзыв': 1, 'пожелание': 2, 'положительный': 3 };
+  const sorted = [...rows].sort((a, b) => {
+    const sa = ORDER[(a['Тональность']||'').toLowerCase()] ?? 9;
+    const sb = ORDER[(b['Тональность']||'').toLowerCase()] ?? 9;
+    return sa - sb;
+  });
+
+  const list = mkEl('div', 'comment-list');
+  sorted.forEach(r => {
+    const sent  = (r['Тональность']||'').toLowerCase();
+    const sConf = SENTIMENTS.find(s => s.key === sent) ?? { color: '#6b7280', bg: '#f3f4f6', border: '#d1d5db', label: r['Тональность'] || '—' };
+    const rowTopics = TOPICS.filter(t => +r[t.key] === 1);
+
+    const cc = mkEl('div', 'comment-card');
+    cc.style.borderLeftColor = sConf.border;
+
+    const meta = mkEl('div', 'comment-meta');
+    meta.innerHTML = `
+      <span class="comment-program">${escHtml(r['Программа'] || '—')}</span>
+      <span class="comment-school">${escHtml(r['Школа'] || '')}</span>
+      <span class="sentiment-badge" style="background:${sConf.bg};color:${sConf.color}">${sConf.label}</span>
+      ${rowTopics.map(t => `<span class="topic-tag">${t.label}</span>`).join('')}`;
+
+    const txt = mkEl('div', 'comment-text');
+    txt.textContent = r['Комментарий'] || '';
+
+    cc.appendChild(meta);
+    cc.appendChild(txt);
+    list.appendChild(cc);
+  });
+  card.appendChild(list);
+  return card;
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
 
 // ─── Boot ─────────────────────────────────────────────────────────────────────
 loadData();
